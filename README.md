@@ -1,0 +1,1 @@
+1 WinMain; MessageBox; windows.h; user32.lib;
