@@ -1,1 +1,7 @@
 .vs
+orange.sln*
+orange.vcxproj*
+build/
+Debug/
+Release/
+x64/
