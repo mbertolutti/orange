@@ -15,7 +15,7 @@ global_variable_static int BitmapHeight;
 global_variable_static int BytesPerPixel;
 
 internal_function_static void
-RenderGradient(int XOffset, int YOffset)
+RenderGradient(int BlueXOffset, int GreenYOffset)
 {
     int Width = BitmapWidth;
     // int Height = BitmapHeight
@@ -27,20 +27,8 @@ RenderGradient(int XOffset, int YOffset)
         uint32_t* Pixel = (uint32_t*)Row;
         for (int X = 0; X < BitmapWidth; ++X)
         {
-            /*
-            Bitmaps:
-            Pixel in memory: RR GG BB xx
-            Little endian architecture
-            0x xxBBGGRR
-
-            Windows Bitmaps:
-            Pixel in memory: BB GG RR xx
-            Little endian architecture
-            0x xxRRGGBB
-            */
-
-            uint8_t Blue = (X + XOffset);
-            uint8_t Green = (Y + YOffset);
+            uint8_t Blue = (X + BlueXOffset);
+            uint8_t Green = (Y + GreenYOffset);
 
             *Pixel++ = ((Green << 8 | Blue));
         }
@@ -74,10 +62,10 @@ Win32ResizeDIBSection(int Width, int Height)
 }
 
 internal_function_static void
-Win32UpdateWindow(HDC Hdc, RECT* ClientRect, int X, int Y, int Width, int Height)
+Win32UpdateWindow(HDC Hdc, RECT ClientRect, int X, int Y, int Width, int Height)
 {
-    int WindowWidth = ClientRect->right - ClientRect->left;
-    int WindowHeight = ClientRect->bottom - ClientRect->top;
+    int WindowWidth = ClientRect.right - ClientRect.left;
+    int WindowHeight = ClientRect.bottom - ClientRect.top;
     StretchDIBits(
         Hdc,
         /*
@@ -139,7 +127,7 @@ LRESULT CALLBACK Wind32MainWndProc(
             RECT ClientRect;
             GetClientRect(hWnd, &ClientRect);
 
-            Win32UpdateWindow(Hdc, &ClientRect, X, Y, Width, Height);
+            Win32UpdateWindow(Hdc, ClientRect, X, Y, Width, Height);
             EndPaint(hWnd, &PaintStruct);
         } break;
 
@@ -210,7 +198,7 @@ WinMain(
                 GetClientRect(hWnd, &ClientRect);
                 int WindowWidth = ClientRect.right - ClientRect.left;
                 int WindowHeight = ClientRect.bottom - ClientRect.top;
-                Win32UpdateWindow(DeviceContext, &ClientRect, 0, 0, WindowWidth, WindowHeight);
+                Win32UpdateWindow(DeviceContext, ClientRect, 0, 0, WindowWidth, WindowHeight);
                 ReleaseDC(hWnd, DeviceContext);
 
                 ++XOffset;
