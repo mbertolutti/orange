@@ -16,4 +16,6 @@
   Switch GetMessage loop to PeekMessageLoop;  
   PeekMessageLoop allows us to also keep on running when there are no more messages left;  
   PeekMessage PM_REMOVE: removes message after peak;  
+5 Refactor; Page size; pointer aliasing; volatile; pixel memory order; const;  
+  r62;  
  

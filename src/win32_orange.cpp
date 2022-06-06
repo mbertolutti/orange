@@ -13,10 +13,9 @@ struct win32_offscreen_buffer
     int Width;
     int Height;
     int Stride;
-    int BytesPerPixel;
 };
 
-global_variable_static bool Running;
+global_variable_static bool GlobalRunning;
 global_variable_static win32_offscreen_buffer GlobalBackBuffer;
 
 struct win32_window_dimension
@@ -37,7 +36,7 @@ win32_window_dimension Win32GetWindowDimension(HWND hWnd)
     return Result;
 }
 
-internal_function_static void RenderGradient(
+internal_function_static void Win32RenderGradient(
     win32_offscreen_buffer Buffer, int BlueXOffset, int GreenYOffset)
 {
     int Width = Buffer.Width;
@@ -69,7 +68,9 @@ internal_function_static void Win32ResizeDIBSection(
 
     Buffer->Width = Width;
     Buffer->Height = Height;
-    Buffer->BytesPerPixel = 4;
+
+    // Pixels are always 32-bit wide. Memory order BB GG RR XX
+    int BytesPerPixel = 4;
 
     Buffer->Info.bmiHeader.biSize = sizeof(Buffer->Info.bmiHeader);
     Buffer->Info.bmiHeader.biWidth = Buffer->Width;
@@ -79,20 +80,19 @@ internal_function_static void Win32ResizeDIBSection(
     Buffer->Info.bmiHeader.biCompression = BI_RGB;
 
     int BitmapMemorySize =
-        (Buffer->Width * Buffer->Height) * Buffer->BytesPerPixel;
+        (Buffer->Width * Buffer->Height) * BytesPerPixel;
 
     Buffer->Memory = VirtualAlloc(0, BitmapMemorySize,
         MEM_COMMIT, PAGE_READWRITE);
 
-
-    Buffer->Stride = Width * Buffer->BytesPerPixel;
+    // Stride is an uint8_t because that is what we need for row iteration
+    Buffer->Stride = Width * BytesPerPixel;
 }
 
 internal_function_static void Win32RenderWindow(
     HDC Hdc,
     int WindowWidth, int WindowHeight,
-    win32_offscreen_buffer Buffer,
-    int X, int Y, int Width, int Height)
+    win32_offscreen_buffer Buffer)
 {
     StretchDIBits(
         Hdc,
@@ -125,7 +125,7 @@ LRESULT CALLBACK Wind32MainWndProc(
 
         case WM_CLOSE:
         {
-            Running = false;
+            GlobalRunning = false;
         } break;
 
         case WM_ACTIVATEAPP:
@@ -135,7 +135,7 @@ LRESULT CALLBACK Wind32MainWndProc(
 
         case WM_DESTROY:
         {
-            Running = false;
+            GlobalRunning = false;
         } break;
 
         case WM_PAINT:
@@ -152,8 +152,7 @@ LRESULT CALLBACK Wind32MainWndProc(
             Win32RenderWindow(
                 DeviceContext,
                 Dimension.Width, Dimension.Height,
-                GlobalBackBuffer,
-                X, Y, Width, Height);
+                GlobalBackBuffer);
 
             EndPaint(hWnd, &PaintStruct);
         } break;
@@ -167,8 +166,7 @@ LRESULT CALLBACK Wind32MainWndProc(
     return Result;
 }
 
-INT CALLBACK
-WinMain(
+INT CALLBACK WinMain(
     _In_ HINSTANCE hInstance,
     _In_opt_ HINSTANCE hPrevInstance,
     _In_ PSTR lpCmdLine,
@@ -176,9 +174,11 @@ WinMain(
 {
     WNDCLASS WindowClass = {};
 
+    // GlobalBackBuffer gets allocated on heap
     Win32ResizeDIBSection(&GlobalBackBuffer, 1280, 720);
 
-    WindowClass.style = CS_HREDRAW | CS_VREDRAW;
+    // complete window redraw; no shared dc;
+    WindowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     // pointer to function for window event response; MainWindowCallback;
     WindowClass.lpfnWndProc = Wind32MainWndProc;
     WindowClass.hInstance = hInstance;
@@ -207,8 +207,8 @@ WinMain(
             int XOffset = 0;
             int YOffset = 0;
 
-            Running = true;
-            while (Running)
+            GlobalRunning = true;
+            while (GlobalRunning)
             {
                 MSG Message;
                 while (PeekMessage(&Message, 0, 0, 0, PM_REMOVE))
@@ -216,13 +216,13 @@ WinMain(
                     // Check if windows sends us WM_Quit.
                     if (Message.message == WM_QUIT)
                     {
-                        Running = false;
+                        GlobalRunning = false;
                     }
                     TranslateMessage(&Message);
                     DispatchMessage(&Message);
                 }
                 
-                RenderGradient(GlobalBackBuffer, XOffset, YOffset);
+                Win32RenderGradient(GlobalBackBuffer, XOffset, YOffset);
 
                 HDC DeviceContext = GetDC(hWnd);
 
@@ -230,8 +230,7 @@ WinMain(
                 Win32RenderWindow(
                     DeviceContext,
                     Dimension.Width, Dimension.Height,
-                    GlobalBackBuffer,
-                    0, 0, Dimension.Width, Dimension.Height);
+                    GlobalBackBuffer);
 
                 ReleaseDC(hWnd, DeviceContext);
 
