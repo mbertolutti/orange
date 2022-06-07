@@ -1,6 +1,6 @@
 #include <Windows.h>
 #include <stdint.h>
-#include <cmath>
+#include <xinput.h>
 
 #define internal_function_static static
 #define local_persist_static static
@@ -15,14 +15,32 @@ struct win32_offscreen_buffer
     int Stride;
 };
 
-global_variable_static bool GlobalRunning;
-global_variable_static win32_offscreen_buffer GlobalBackBuffer;
-
 struct win32_window_dimension
 {
     int Width;
     int Height;
 };
+
+#define X_INPUT_GET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE* pState)
+typedef X_INPUT_GET_STATE(x_input_get_state);
+X_INPUT_GET_STATE(XInputGetStateStub)
+{
+    return(0);
+}
+global_variable_static x_input_get_state* XInputGetState_ = XInputGetStateStub;
+#define XInputGetState XInputGetState_
+
+#define X_INPUT_SET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration)
+typedef X_INPUT_SET_STATE(x_input_set_state);
+X_INPUT_SET_STATE(XInputSetStateStub)
+{
+    return(0);
+}
+global_variable_static x_input_set_state* XInputSetState_ = XInputSetStateStub;
+#define XInputSetState XInputSetState_
+
+global_variable_static bool GlobalRunning;
+global_variable_static win32_offscreen_buffer GlobalBackBuffer;
 
 win32_window_dimension Win32GetWindowDimension(HWND hWnd)
 {
@@ -204,6 +222,11 @@ INT CALLBACK WinMain(
             );
         if (hWnd)
         {
+            // We have specified CS_OWNDC, so are not sharing it an
+            // can just get one and keep using it, instead of calling
+            // GetDC() every time we are using device context.
+            HDC DeviceContext = GetDC(hWnd);
+
             int XOffset = 0;
             int YOffset = 0;
 
@@ -222,9 +245,39 @@ INT CALLBACK WinMain(
                     DispatchMessage(&Message);
                 }
                 
-                Win32RenderGradient(GlobalBackBuffer, XOffset, YOffset);
+                for (DWORD ControllerIndex = 0; ControllerIndex < XUSER_MAX_COUNT; ControllerIndex++)
+                {
+                    XINPUT_STATE ControllerState;
+                    ZeroMemory(&ControllerState, sizeof(XINPUT_STATE));
 
-                HDC DeviceContext = GetDC(hWnd);
+                    if (XInputGetState(ControllerIndex, &ControllerState) == ERROR_SUCCESS)
+                    {
+                        // Controller is connected
+                        XINPUT_GAMEPAD* GamePad = &ControllerState.Gamepad;
+
+                        bool Up = (GamePad->wButtons & XINPUT_GAMEPAD_DPAD_UP);
+                        bool Down = (GamePad->wButtons & XINPUT_GAMEPAD_DPAD_DOWN);
+                        bool Left = (GamePad->wButtons & XINPUT_GAMEPAD_DPAD_LEFT);
+                        bool Right = (GamePad->wButtons & XINPUT_GAMEPAD_DPAD_RIGHT);
+                        bool Start = (GamePad->wButtons & XINPUT_GAMEPAD_START);
+                        bool Back = (GamePad->wButtons & XINPUT_GAMEPAD_BACK);
+                        bool LeftShoulder = (GamePad->wButtons & XINPUT_GAMEPAD_LEFT_SHOULDER);
+                        bool RightShoulder = (GamePad->wButtons & XINPUT_GAMEPAD_RIGHT_SHOULDER);
+                        bool AButton = (GamePad->wButtons & XINPUT_GAMEPAD_A);
+                        bool BButton = (GamePad->wButtons & XINPUT_GAMEPAD_B);
+                        bool CButton = (GamePad->wButtons & XINPUT_GAMEPAD_X);
+                        bool DButton = (GamePad->wButtons & XINPUT_GAMEPAD_Y);
+
+                        int16_t ThumbStickX = GamePad->sThumbLX;
+                        int16_t ThumbStickY = GamePad->sThumbLY;
+                    }
+                    else
+                    {
+                        // Controller is not connected
+                    }
+                }
+                
+                Win32RenderGradient(GlobalBackBuffer, XOffset, YOffset);
 
                 win32_window_dimension Dimension = Win32GetWindowDimension(hWnd);
                 Win32RenderWindow(
