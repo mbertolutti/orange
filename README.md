@@ -23,4 +23,4 @@
   LoadLibrary; Set XInputGetState and XInputSetState stub pointers to xinput_3.dll;  
   Add vertical, horizontal and diagonal controller movement;  
   Add rumble: start with button a, stop with button b;  
-  
+  WM_SYSKEYDOWN, WM_SYSKEYUP, WM_KEYDOWN, WM_KEYUP;  
