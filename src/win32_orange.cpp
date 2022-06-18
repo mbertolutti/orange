@@ -65,12 +65,12 @@ internal_function_static win32_window_dimension Win32GetWindowDimension(HWND hWn
 }
 
 internal_function_static void Win32RenderGradient(
-    win32_offscreen_buffer Buffer, int BlueXOffset, int GreenYOffset)
+    win32_offscreen_buffer* Buffer, int BlueXOffset, int GreenYOffset)
 {
-    int Width = Buffer.Width;
-    int Height = Buffer.Height;
+    int Width = Buffer->Width;
+    int Height = Buffer->Height;
 
-    uint8_t* Row = (uint8_t*)Buffer.Memory;
+    uint8_t* Row = (uint8_t*)Buffer->Memory;
     for (int Y = 0; Y < Height; ++Y)
     {
         uint32_t* Pixel = (uint32_t*)Row;
@@ -82,7 +82,7 @@ internal_function_static void Win32RenderGradient(
             *Pixel++ = ((Green << 8 | Blue));
         }
 
-        Row += Buffer.Stride;
+        Row += Buffer->Stride;
     }
 }
 
@@ -118,9 +118,8 @@ internal_function_static void Win32ResizeDIBSection(
 }
 
 internal_function_static void Win32RenderWindow(
-    HDC Hdc,
-    int WindowWidth, int WindowHeight,
-    win32_offscreen_buffer Buffer)
+    win32_offscreen_buffer* Buffer,
+    HDC Hdc, int WindowWidth, int WindowHeight)
 {
     StretchDIBits(
         Hdc,
@@ -129,9 +128,9 @@ internal_function_static void Win32RenderWindow(
         X, Y, Width, Height,
         */
         0, 0, WindowWidth, WindowHeight,
-        0, 0, Buffer.Width, Buffer.Height,
-        Buffer.Memory,
-        &Buffer.Info,
+        0, 0, Buffer->Width, Buffer->Height,
+        Buffer->Memory,
+        &Buffer->Info,
         DIB_RGB_COLORS,
         SRCCOPY
     );
@@ -248,9 +247,8 @@ LRESULT CALLBACK Wind32MainWndProc(
             win32_window_dimension Dimension = Win32GetWindowDimension(hWnd);
 
             Win32RenderWindow(
-                DeviceContext,
-                Dimension.Width, Dimension.Height,
-                GlobalBackBuffer);
+                &GlobalBackBuffer, DeviceContext,
+                Dimension.Width, Dimension.Height);
 
             EndPaint(hWnd, &PaintStruct);
         } break;
@@ -422,13 +420,12 @@ INT CALLBACK WinMain(
                     }
                 }
                 
-                Win32RenderGradient(GlobalBackBuffer, XOffset, YOffset);
+                Win32RenderGradient(&GlobalBackBuffer, XOffset, YOffset);
 
                 win32_window_dimension Dimension = Win32GetWindowDimension(hWnd);
                 Win32RenderWindow(
-                    DeviceContext,
-                    Dimension.Width, Dimension.Height,
-                    GlobalBackBuffer);
+                    &GlobalBackBuffer, DeviceContext,
+                    Dimension.Width, Dimension.Height);
 
                 ReleaseDC(hWnd, DeviceContext);
             }
