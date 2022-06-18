@@ -18,4 +18,9 @@
   PeekMessage PM_REMOVE: removes message after peak;  
 5 Refactor; Page size; pointer aliasing; volatile; pixel memory order; const;  
   r62;  
-6 XInput; XInputGetState stub function; XInputSetState stub function;
+6 XInput; XInputGetState stub function; XInputSetState stub function;  
+  Get-ChildItem -recurse -include "xinput1_*.dll";  
+  LoadLibrary; Set XInputGetState and XInputSetState stub pointers to xinput_3.dll;  
+  Add vertical, horizontal and diagonal controller movement;  
+  Add rumble: start with button a, stop with button b;  
+  

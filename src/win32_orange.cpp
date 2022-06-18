@@ -21,6 +21,9 @@ struct win32_window_dimension
     int Height;
 };
 
+global_variable_static bool GlobalRunning;
+global_variable_static win32_offscreen_buffer GlobalBackBuffer;
+
 #define X_INPUT_GET_STATE(name) DWORD WINAPI name(DWORD dwUserIndex, XINPUT_STATE* pState)
 typedef X_INPUT_GET_STATE(x_input_get_state);
 X_INPUT_GET_STATE(XInputGetStateStub)
@@ -39,10 +42,17 @@ X_INPUT_SET_STATE(XInputSetStateStub)
 global_variable_static x_input_set_state* XInputSetState_ = XInputSetStateStub;
 #define XInputSetState XInputSetState_
 
-global_variable_static bool GlobalRunning;
-global_variable_static win32_offscreen_buffer GlobalBackBuffer;
+internal_function_static void Win32LoadXInput(void)
+{
+    HMODULE XInputLibrary = LoadLibraryA("xinput1_3.dll");
+    if (XInputLibrary)
+    {
+        XInputGetState = (x_input_get_state*)GetProcAddress(XInputLibrary, "XInputGetState");
+        XInputSetState = (x_input_set_state*)GetProcAddress(XInputLibrary, "XInputSetState");
+    }
+}
 
-win32_window_dimension Win32GetWindowDimension(HWND hWnd)
+internal_function_static win32_window_dimension Win32GetWindowDimension(HWND hWnd)
 {
     win32_window_dimension Result;
 
@@ -190,6 +200,8 @@ INT CALLBACK WinMain(
     _In_ PSTR lpCmdLine,
     _In_ INT nCmdShow)
 {
+    Win32LoadXInput();
+
     WNDCLASS WindowClass = {};
 
     // GlobalBackBuffer gets allocated on heap
@@ -270,6 +282,69 @@ INT CALLBACK WinMain(
 
                         int16_t ThumbStickX = GamePad->sThumbLX;
                         int16_t ThumbStickY = GamePad->sThumbLY;
+
+                        // move vertical or horizontal
+                        if (Up)
+                        {
+                            --YOffset;
+                        }
+
+                        if (Down)
+                        {
+                            ++YOffset;
+                        }
+
+                        if (Left)
+                        {
+                            --XOffset;
+                        }
+
+                        if (Right)
+                        {
+                            ++XOffset;
+                        }
+
+                        // move diagonal
+                        if (Up + Left)
+                        {
+                            --YOffset;
+                            --XOffset;
+                        }
+
+                        if (Up + Right)
+                        {
+                            --YOffset;
+                            ++XOffset;
+                        }
+
+                        if (Down + Left)
+                        {
+                            ++YOffset;
+                            --XOffset;
+                        }
+
+                        if (Down + Right)
+                        {
+                            ++YOffset;
+                            ++XOffset;
+                        }
+
+                        // vibration
+                        if (AButton)
+                        {
+                            XINPUT_VIBRATION Vibration;
+                            Vibration.wLeftMotorSpeed = 60000;
+                            Vibration.wRightMotorSpeed = 60000;
+                            XInputSetState(0, &Vibration);
+                        }
+
+                        if (BButton)
+                        {
+                            XINPUT_VIBRATION Vibration;
+                            Vibration.wLeftMotorSpeed = 0;
+                            Vibration.wRightMotorSpeed = 0;
+                            XInputSetState(0, &Vibration);
+                        }
                     }
                     else
                     {
@@ -286,9 +361,6 @@ INT CALLBACK WinMain(
                     GlobalBackBuffer);
 
                 ReleaseDC(hWnd, DeviceContext);
-
-                ++XOffset;
-                YOffset += 2;
             }
         }
         else
