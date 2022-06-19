@@ -28,7 +28,7 @@ global_variable_static win32_offscreen_buffer GlobalBackBuffer;
 typedef X_INPUT_GET_STATE(x_input_get_state);
 X_INPUT_GET_STATE(XInputGetStateStub)
 {
-    return(0);
+    return(ERROR_DEVICE_NOT_CONNECTED);
 }
 global_variable_static x_input_get_state* XInputGetState_ = XInputGetStateStub;
 #define XInputGetState XInputGetState_
@@ -37,7 +37,7 @@ global_variable_static x_input_get_state* XInputGetState_ = XInputGetStateStub;
 typedef X_INPUT_SET_STATE(x_input_set_state);
 X_INPUT_SET_STATE(XInputSetStateStub)
 {
-    return(0);
+    return(ERROR_DEVICE_NOT_CONNECTED);
 }
 global_variable_static x_input_set_state* XInputSetState_ = XInputSetStateStub;
 #define XInputSetState XInputSetState_
@@ -379,6 +379,8 @@ INT CALLBACK WinMain(
 
                         int16_t ThumbStickX = GamePad->sThumbLX;
                         int16_t ThumbStickY = GamePad->sThumbLY;
+
+                        --YOffset;
 
                         // move vertical or horizontal
                         if (Up)
