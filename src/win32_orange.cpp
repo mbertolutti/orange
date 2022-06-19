@@ -171,8 +171,10 @@ LRESULT CALLBACK Wind32MainWndProc(
         case WM_KEYUP:
         {
             uint32_t VKCode = wParam;
-            bool WasDown = ((lParam & (1 << 30)) != 0);
-            bool IsDown = ((lParam & (1 << 31)) == 0);
+            #define KeyMessageWasDownBit (1 << 30)
+            #define KeyMessageIsDownBit (1 << 31)
+            bool WasDown = ((lParam & KeyMessageWasDownBit) != 0);
+            bool IsDown = ((lParam & KeyMessageIsDownBit) == 0);
             if (WasDown != IsDown)
             {
                 if (VKCode == 'W')
