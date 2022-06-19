@@ -185,62 +185,81 @@ LRESULT CALLBACK Wind32MainWndProc(
             bool IsDown = ((lParam & KeyMessageIsDownBit) == 0);
             if (WasDown != IsDown)
             {
-                if (VKCode == 'W')
+                switch (VKCode)
                 {
-
-                }
-                else if (VKCode == 'A')
-                {
-
-                }
-                else if (VKCode == 'S')
-                {
-
-                }
-                else if (VKCode == 'D')
-                {
-
-                }
-                else if (VKCode == 'Q')
-                {
-
-                }
-                else if (VKCode == 'E')
-                {
-
-                }
-                else if (VKCode == VK_UP)
-                {
-
-                }
-                else if (VKCode == VK_LEFT)
-                {
-
-                }
-                else if (VKCode == VK_DOWN)
-                {
-
-                }
-                else if (VKCode == VK_RIGHT)
-                {
-
-                }
-                else if (VKCode == VK_ESCAPE)
-                {
-                    OutputDebugStringA("ESCAPE: ");
-                    if (IsDown)
+                    case 'W':
                     {
-                        OutputDebugStringA("IsDown");
-                    }
-                    if (WasDown)
-                    {
-                        OutputDebugStringA("WasDown");
-                    }
-                    OutputDebugStringA("\n");
-                }
-                else if (VKCode == VK_SPACE)
-                {
 
+                    }break;
+
+                    case 'A':
+                    {
+
+                    }break;
+
+                    case 'S':
+                    {
+
+                    }break;
+
+                    case 'D':
+                    {
+
+                    }break;
+
+                    case 'Q':
+                    {
+
+                    }break;
+
+                    case 'E':
+                    {
+
+                    }break;
+
+                    case VK_UP:
+                    {
+
+                    }break;
+
+                    case VK_LEFT:
+                    {
+
+                    }break;
+
+                    case VK_DOWN:
+                    {
+
+                    }break;
+
+                    case VK_RIGHT:
+                    {
+
+                    }break;
+
+                    case VK_ESCAPE:
+                    {
+                        OutputDebugStringA("ESCAPE: ");
+                        if (IsDown)
+                        {
+                            OutputDebugStringA("IsDown");
+                        }
+                        if (WasDown)
+                        {
+                            OutputDebugStringA("WasDown");
+                        }
+                        OutputDebugStringA("\n");
+                    }break;
+
+                    case VK_SPACE:
+                    {
+
+                    }break;
+
+                    default:
+                    {
+
+                    }break;
                 }
             }
         } break;
