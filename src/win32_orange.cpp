@@ -48,7 +48,15 @@ internal_function_static void Win32LoadXInput(void)
     if (XInputLibrary)
     {
         XInputGetState = (x_input_get_state*)GetProcAddress(XInputLibrary, "XInputGetState");
+        if (!XInputGetState)
+        { 
+            XInputGetState = XInputGetStateStub;
+        }
+
         XInputSetState = (x_input_set_state*)GetProcAddress(XInputLibrary, "XInputSetState");
+        {
+            XInputSetState = XInputSetStateStub;
+        }
     }
 }
 
