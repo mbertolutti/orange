@@ -190,6 +190,7 @@ LRESULT CALLBACK Wind32MainWndProc(
             bool IsDown = ((lParam & KeyMessageIsDownBit) == 0);
             if (WasDown != IsDown)
             {
+                bool AltKeyWasDown = ((lParam & (1 << 29)) != 0);
                 switch (VKCode)
                 {
                     case 'W':
@@ -259,6 +260,14 @@ LRESULT CALLBACK Wind32MainWndProc(
                     case VK_SPACE:
                     {
 
+                    }break;
+
+                    case VK_F4:
+                    {
+                        if (AltKeyWasDown)
+                        {
+                            GlobalRunning = false;
+                        }
                     }break;
 
                     default:
